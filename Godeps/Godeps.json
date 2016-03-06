@@ -1,0 +1,26 @@
+{
+	"ImportPath": "github.com/the42/bevaddress",
+	"GoVersion": "go1.6",
+	"Deps": [
+		{
+			"ImportPath": "github.com/emicklei/go-restful",
+			"Comment": "v1.2-27-g6097db5",
+			"Rev": "6097db5077a9129a36e611df24ef45a0669dbbdb"
+		},
+		{
+			"ImportPath": "github.com/emicklei/go-restful/log",
+			"Comment": "v1.2-27-g6097db5",
+			"Rev": "6097db5077a9129a36e611df24ef45a0669dbbdb"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Comment": "go1.0-cutoff-83-g165a352",
+			"Rev": "165a3529e799da61ab10faed1fabff3662d6193f"
+		},
+		{
+			"ImportPath": "github.com/lib/pq/oid",
+			"Comment": "go1.0-cutoff-83-g165a352",
+			"Rev": "165a3529e799da61ab10faed1fabff3662d6193f"
+		}
+	]
+}
