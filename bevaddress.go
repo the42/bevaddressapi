@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/emicklei/go-restful"
+	"github.com/gorilla/websocket"
 	_ "github.com/lib/pq"
 )
 
@@ -15,6 +15,8 @@ type Address struct {
 	PLZ, Gemeindename, Ortsname, Strassenname, Hausnr *string
 	LatlongX, LatlongY                                *float64
 }
+
+var upgrader = websocket.Upgrader{}
 
 func main() {
 	info("starting up")
@@ -24,27 +26,7 @@ func main() {
 	}
 	connection := &connection{DB: conn}
 
-	restful.DefaultRequestContentType(restful.MIME_JSON)
-	restful.DefaultResponseContentType(restful.MIME_JSON)
-
-	ws := new(restful.WebService)
-	ws.
-		Path("/search").
-		Produces(restful.MIME_JSON)
-
-	ws.Route(ws.GET("/fulltext/{pattern}").To(connection.fulltextSearch).
-		Doc("").
-		Param(ws.PathParameter("pattern", "search term").DataType("string")).
-		Writes([]Address{}))
-
-	cors := restful.CrossOriginResourceSharing{
-		ExposeHeaders:  []string{"X-My-Header"},
-		AllowedHeaders: []string{"Content-Type", "Accept"},
-		AllowedMethods: []string{"GET", "POST"},
-		CookiesAllowed: false}
-
-	ws.Filter(cors.Filter)
-	restful.Add(ws)
+	http.HandleFunc("/ws/", connection.fulltextSearch)
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -68,9 +50,28 @@ on adresse.gkz = gemeinde.gkz
 where search @@ to_tsquery(plainto_tsquery('german', $1)::text || ':*')
 limit 25;`
 
-func (con *connection) fulltextSearch(request *restful.Request, response *restful.Response) {
-	param := request.PathParameter("pattern")
+func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
+
+	param := r.URL.Query().Get("pattern")
 	fmt.Println(param)
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		//log.Println(err)
+		return
+	}
+
+	// for {
+	// 	messageType, p, err := conn.ReadMessage()
+	// 	if err != nil {
+	// 		return
+	// 	}
+	//
+	// 	err = conn.WriteMessage(messageType, p)
+	// 	if err != nil {
+	// 		return
+	// 	}
+	// }
+
 	rows, err := con.Query(fulltextSearchSQL, param)
 	if err != nil {
 		fatal(err.Error())
@@ -91,7 +92,7 @@ func (con *connection) fulltextSearch(request *restful.Request, response *restfu
 
 		addresses = append(addresses, addr)
 	}
-	response.WriteEntity(addresses)
+	conn.WriteJSON(addresses)
 }
 
 func getDatabaseConnection() (*sql.DB, error) {

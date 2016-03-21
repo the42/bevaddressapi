@@ -1,16 +1,11 @@
 {
 	"ImportPath": "github.com/the42/bevaddress",
 	"GoVersion": "go1.6",
+	"GodepVersion": "v60",
 	"Deps": [
 		{
-			"ImportPath": "github.com/emicklei/go-restful",
-			"Comment": "v1.2-27-g6097db5",
-			"Rev": "6097db5077a9129a36e611df24ef45a0669dbbdb"
-		},
-		{
-			"ImportPath": "github.com/emicklei/go-restful/log",
-			"Comment": "v1.2-27-g6097db5",
-			"Rev": "6097db5077a9129a36e611df24ef45a0669dbbdb"
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "e2e3d8414d0fbae04004f151979f4e27c6747fe7"
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
