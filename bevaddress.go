@@ -2,32 +2,24 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	_ "github.com/lib/pq"
 )
 
+// Address struct
+// TODO: add json struct fields for lowercase serialisation
 type Address struct {
 	PLZ, Gemeindename, Ortsname, Strassenname, Hausnr *string
 	LatlongX, LatlongY                                *float64
 }
 
-var upgrader = websocket.Upgrader{}
-
-func main() {
-	info("starting up")
-	conn, err := getDatabaseConnection()
-	if err != nil {
-		fatal("Error %s", err)
-	}
-	connection := &connection{DB: conn}
-
-	http.HandleFunc("/ws/", connection.fulltextSearch)
-	http.ListenAndServe(":8080", nil)
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
 type connection struct {
@@ -52,32 +44,20 @@ limit 25;`
 
 func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
 
-	param := r.URL.Query().Get("pattern")
-	fmt.Println(param)
+	// TODO: do not use query but pattern
+	param := r.URL.Query().Get("q")
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		//log.Println(err)
+		info(err.Error())
 		return
 	}
 
-	// for {
-	// 	messageType, p, err := conn.ReadMessage()
-	// 	if err != nil {
-	// 		return
-	// 	}
-	//
-	// 	err = conn.WriteMessage(messageType, p)
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// }
-
 	rows, err := con.Query(fulltextSearchSQL, param)
 	if err != nil {
-		fatal(err.Error())
+		info(err.Error())
+		return
 	}
 	defer rows.Close()
-
 	var plz, gemeindename, ortsname, strassenname, hausnrzahl1 *string
 	var latlongy, latlongx *float64
 
@@ -85,7 +65,8 @@ func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		if err := rows.Scan(&plz, &gemeindename, &ortsname, &strassenname, &hausnrzahl1, &latlongy, &latlongx); err != nil {
-			fatal(err.Error())
+			info(err.Error())
+			return
 		}
 
 		addr := Address{PLZ: plz, Gemeindename: gemeindename, Ortsname: ortsname, Strassenname: strassenname, Hausnr: hausnrzahl1, LatlongY: latlongy, LatlongX: latlongx}
@@ -93,6 +74,7 @@ func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
 		addresses = append(addresses, addr)
 	}
 	conn.WriteJSON(addresses)
+	conn.Close()
 }
 
 func getDatabaseConnection() (*sql.DB, error) {
@@ -117,4 +99,20 @@ func info(template string, values ...interface{}) {
 
 func fatal(template string, values ...interface{}) {
 	log.Fatalf("[bevaddress][fatal] "+template+"\n", values...)
+}
+
+func main() {
+	info("starting up")
+	conn, err := getDatabaseConnection()
+	if err != nil {
+		fatal(err.Error())
+	}
+	connection := &connection{DB: conn}
+
+	r := mux.NewRouter()
+	s := r.PathPrefix("/ws/").Subrouter()
+	// "/ws/"
+	s.HandleFunc("/address/fts/", connection.fulltextSearch)
+
+	http.ListenAndServe(":8080", r)
 }
