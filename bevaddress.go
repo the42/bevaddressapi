@@ -26,21 +26,21 @@ type connection struct {
 	*sql.DB
 }
 
-const fulltextSearchSQL = `select addritems.plz, addritems.gemeindename, addritems.ortsname, addritems.strassenname, adresse.hausnrzahl1, ST_Y(adresse.latlong), ST_X(adresse.latlong)
+const fulltextSearchSQL = `select adresse.plz, gemeinde.gemeindename, ortschaft.ortsname, strasse.strassenname, adresse.hausnrzahl1, ST_Y(adresse.latlong), ST_X(adresse.latlong)
+from adresse
+inner join (select addritems.adrcd
 from addritems
-inner join adresse
-on adresse.adrcd = addritems.adrcd
+where search @@ to_tsquery(plainto_tsquery('german', $1)::text || ':*')
+limit 25) s
+on s.adrcd = adresse.adrcd
 inner join strasse
 on adresse.skz = strasse.skz
-and adresse.gkz = strasse.gkz
 and adresse.gkz = strasse.gkz
 inner join ortschaft
 on adresse.okz = ortschaft.okz
 and adresse.gkz = ortschaft.gkz
 inner join gemeinde
-on adresse.gkz = gemeinde.gkz
-where search @@ to_tsquery(plainto_tsquery('german', $1)::text || ':*')
-limit 25;`
+on adresse.gkz = gemeinde.gkz`
 
 func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
 
@@ -112,7 +112,7 @@ func main() {
 	r := mux.NewRouter()
 	s := r.PathPrefix("/ws/").Subrouter()
 	// "/ws/"
-	s.HandleFunc("/address/fts/", connection.fulltextSearch)
+	s.HandleFunc("/address/fts", connection.fulltextSearch)
 
 	http.ListenAndServe(":8080", r)
 }
