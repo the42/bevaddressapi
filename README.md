@@ -29,5 +29,4 @@ Currently only PostGIS is supported as the database backend. See the
 # Usage
 * `/ws/address/fts`: A websocket endpoint for full text search. Paramters:  
 `q` url-encoded string for full text search  
-`postfix` either `true` or `false` (default), controlling if the search term(s) will also postfix match. Set to true, the search term `Krems` will match the city
-Krems but also Kremsmünster.
+`postfix` (optional, `false` (default); If set to `true`, search term(s) will also postfix match, eg. `Krems` will match the city Krems but also Kremsmünster.
