@@ -11,8 +11,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Address struct
-// TODO: add json struct fields for lowercase serialisation
+// Address struct is the response returned after a request for addresses
 type Address struct {
 	PLZ, Gemeindename, Ortsname, Strassenname, Hausnr *string
 	LatlongX, LatlongY                                *float64
@@ -44,7 +43,6 @@ on adresse.gkz = gemeinde.gkz`
 
 func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
 
-	// TODO: do not use query but pattern
 	param := r.URL.Query().Get("q")
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -78,7 +76,6 @@ func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 func getDatabaseConnection() (*sql.DB, error) {
-
 	var dburl string
 
 	if dburl = os.Getenv("DATABASE_URL"); dburl == "" {
@@ -111,8 +108,12 @@ func main() {
 
 	r := mux.NewRouter()
 	s := r.PathPrefix("/ws/").Subrouter()
-	// "/ws/"
 	s.HandleFunc("/address/fts", connection.fulltextSearch)
 
-	http.ListenAndServe(":8080", r)
+	var port string
+	if port = os.Getenv("PORT"); port == "" {
+		port = "5000"
+	}
+
+	http.ListenAndServe(":"+port, r)
 }
