@@ -1,21 +1,22 @@
 {
 	"ImportPath": "github.com/the42/bevaddress",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v60",
+	"GodepVersion": "v72",
 	"Deps": [
 		{
 			"ImportPath": "github.com/gorilla/websocket",
-			"Rev": "e2e3d8414d0fbae04004f151979f4e27c6747fe7"
+			"Comment": "v1.0.0-7-g50d660d",
+			"Rev": "50d660d6ac981c9de3540279f63d163b9a690930"
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
-			"Comment": "go1.0-cutoff-83-g165a352",
-			"Rev": "165a3529e799da61ab10faed1fabff3662d6193f"
+			"Comment": "go1.0-cutoff-96-gee1442b",
+			"Rev": "ee1442bda7bd1b6a84e913bdb421cb1874ec629d"
 		},
 		{
 			"ImportPath": "github.com/lib/pq/oid",
-			"Comment": "go1.0-cutoff-83-g165a352",
-			"Rev": "165a3529e799da61ab10faed1fabff3662d6193f"
+			"Comment": "go1.0-cutoff-96-gee1442b",
+			"Rev": "ee1442bda7bd1b6a84e913bdb421cb1874ec629d"
 		}
 	]
 }
