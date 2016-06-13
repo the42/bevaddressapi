@@ -10,7 +10,7 @@
                // alert("WebSocket is supported by your Browser!");
 
                // Let us open a web socket
-               var ws = new WebSocket("ws://localhost:8080/ws/address/fts?q=" + document.getElementById('addressfts').value + '"');
+               var ws = new WebSocket("ws://185.38.252.139:6002/ws/address/fts?q=" + document.getElementById('addressfts').value + '"');
 
                ws.onopen = function()
                {
@@ -44,12 +44,25 @@
 
    </head>
    <body>
-      <input type="text" name="addressfts" id="addressfts">
+      <input type="text" name="addressfts" id="addressfts" value="Wien, erster bezirk, akademiestrasse">
       <div id="sse">
          <a href="javascript:WebSocketTest()">Query Address</a>
       </div>
       <div id="addressftsresult">
-
       </div>
+    </p>
+    <p>
+      Warum ist diese Seite so häßlich?
+    </p>
+    <p>
+      Diese Seite testet die Volltextsuche in Adressdaten des BEV.<br>
+      Der Quellcode für dieses Service ist verfügbar unter
+      <ul>
+        <li><a href='https://github.com/the42/bevdockerdb'>https://github.com/the42/bevdockerdb</a></li>
+        <li><a href='https://github.com/the42/bevaddress-dataload'>https://github.com/the42/bevaddress-dataload</a></li>
+        <li><a href='https://github.com/the42/bevaddressapi'>https://github.com/the42/bevaddressapi</a></li>
+      </ul>
+      Die API ist beschrieben unter <a href='https://github.com/the42/bevaddressapi/blob/master/README.md'>README</a>. Bau doch eine schönere Webseite!
+    </p>
    </body>
 </html>
