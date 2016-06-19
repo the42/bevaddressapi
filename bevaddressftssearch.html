@@ -2,9 +2,9 @@
 <html>
    <head>
    <meta charset="utf-8"/>
-      <link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.6/flatly/bootstrap.min.css"
+      <link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.6/yeti/bootstrap.min.css"
             rel="stylesheet"
-            integrity="sha384-XYCjB+hFAjSbgf9yKUgbysEjaVLOXhCgATTEBpCqT1R3jvG5LGRAK5ZIyRbH5vpX"
+            integrity="sha384-yxFy3Tt84CcGRj9UI7RA25hoUMpUPoFzcdPtK3hBdNgEGnh9FdKgMVM+lbAZTKN2"
             crossorigin="anonymous">
 
       <style>
@@ -33,33 +33,32 @@
         // DataTable initialization
         $(document).ready( function () {
           $('#addressftsresult').DataTable({
-            "columns": [
-               { "data": "PLZ" },
-               { "data": "Gemeindename" },
-               { "data": "Ortsname" },
-               { "data": "Strassenname" },
-               { "data": "Hausnr." },
-               { "data": "LatlongX" },
-               { "data": "LatlongY" }
-           ],
+            columns: [
+               { data: "PLZ",          width: "100" },
+               { data: "Gemeindename", width: "100" },
+               { data: "Ortsname",     width: "300" },
+               { data: "Strassenname", width: "300" },
+               { data: "Hausnr.",      width: "50" },
+               { data: "LatlongX",     width: "100" },
+               { data: "LatlongY",     width: "100" }
+            ],
+            "language": {
+              "url": "https://cdn.datatables.net/plug-ins/1.10.12/i18n/German.json"
+            }
           });
         });
 
-         function WebSocketTest()
+        function WebSocketTest()
          {
             if ("WebSocket" in window)
             {
-               // alert("WebSocket is supported by your Browser!");
-
-               // Let us open a web socket
-               var ws = new WebSocket("ws://185.38.252.139:6002/ws/address/fts?q=" + document.getElementById('addressfts').value + '"');
+               var ws = new WebSocket("ws://185.38.252.139:6002/ws/address/fts?q=" +
+                        document.getElementById('addressfts').value + '"');
 
                ws.onopen = function()
                {
                   // Web Socket is connected, send data using send()
                   // ws.send("Message to send");
-                  // alert("Message is sent...");
-                  // document.getElementById('addressftsresult').DataTable();
                };
 
                ws.onmessage = function (evt)
@@ -74,16 +73,13 @@
                };
 
                ws.onclose = function()
-               {
-                  // websocket is closed.
-                  // alert("Connection is closed...");
+               { // websocket is closed.
                };
             }
 
             else
             {
-               // The browser doesn't support WebSocket
-               alert("WebSocket NOT supported by your Browser!");
+              alert("WebSocket NOT supported by your Browser!");
             }
          }
       </script>
@@ -115,53 +111,45 @@
 
     <div class="container">
 
-      <h1>Volltextsuche</h1>
+      <div class="row">
+        <h1>Volltextsuche</h1>
 
-      <form>
-        <div class="form-group">
-          <label for="exampleInputEmail1">Adresse</label>
-          <input type="text"
-                 class="form-control"
-                 name="addressfts"
-                 id="addressfts"
-                 value="Wien, erster bezirk, akademiestrasse"
-                 placeholder="Wien, erster bezirk, akademiestrasse">
-        </div>
+        <form>
+          <div class="form-group">
+            <label for="exampleInputEmail1">Adresse</label>
+            <input type="text"
+                   class="form-control"
+                   name="addressfts"
+                   id="addressfts"
+                   value="Wien, erster bezirk, akademiestrasse"
+                   placeholder="Wien, erster bezirk, akademiestrasse">
+          </div>
 
-        <div id="sse">
-           <a href="javascript:WebSocketTest()" class="btn btn-success">Adressen abfragen</a>
-        </div>
-      </form>
+          <div id="sse">
+             <a href="javascript:WebSocketTest()" class="btn btn-success">Adressen abfragen</a>
+          </div>
+        </form>
+      </div>
+      <hr/>
 
-      <br/><br/>
+      <div class="row table-responsive">
+        <table id="addressftsresult" class="table table-striped table-bordered table-hover">
+          <thead>
+            <tr class="primary">
+              <th>PLZ</th>
+              <th>Gemeindename</th>
+              <th>Ortsname</th>
+              <th>Strassenname</th>
+              <th>Hausnr.</th>
+              <th>LatlongX</th>
+              <th>LatlongY</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+      <hr/>
 
-
-      <table id="addressftsresult" class="display">
-        <thead>
-          <tr>
-            <th>PLZ</th>
-            <th>Gemeindename</th>
-            <th>Ortsname</th>
-            <th>Strassenname</th>
-            <th>Hausnr.</th>
-            <th>LatlongX</th>
-            <th>LatlongY</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr>
-        </tbody>
-      </table>
-
-      <p>
+      <div class="row">
         Diese Seite testet die Volltextsuche in Adressdaten des BEV.<br>
         Der Quellcode für dieses Service ist verfügbar unter
         <ul>
@@ -170,7 +158,7 @@
           <li><a href='https://github.com/the42/bevaddressapi'>https://github.com/the42/bevaddressapi</a></li>
         </ul>
         Die API ist beschrieben unter <a href='https://github.com/the42/bevaddressapi/blob/master/README.md'>README</a>. Forke mich doch auf Github!
-      </p>
+      </div>
 
     </div><!-- /.container -->
    </body>
