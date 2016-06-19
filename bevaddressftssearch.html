@@ -2,7 +2,49 @@
 <html>
    <head>
    <meta charset="utf-8"/>
+      <link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.6/flatly/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-XYCjB+hFAjSbgf9yKUgbysEjaVLOXhCgATTEBpCqT1R3jvG5LGRAK5ZIyRbH5vpX"
+            crossorigin="anonymous">
+
+      <style>
+        body { padding-top: 70px; }
+      </style>
+
+      <link rel="stylesheet"
+            type="text/css"
+            href="https://cdn.datatables.net/u/bs/dt-1.10.12/datatables.min.css"/>
+
+      <script src="https://code.jquery.com/jquery-2.2.4.min.js"
+              integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+              crossorigin="anonymous">
+      </script>
+
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+              integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
+              crossorigin="anonymous">
+      </script>
+
+      <script type="text/javascript"
+              src="https://cdn.datatables.net/u/bs/dt-1.10.12/datatables.min.js">
+      </script>
+
       <script type="text/javascript">
+        // DataTable initialization
+        $(document).ready( function () {
+          $('#addressftsresult').DataTable({
+            "columns": [
+               { "data": "PLZ" },
+               { "data": "Gemeindename" },
+               { "data": "Ortsname" },
+               { "data": "Strassenname" },
+               { "data": "Hausnr." },
+               { "data": "LatlongX" },
+               { "data": "LatlongY" }
+           ],
+          });
+        });
+
          function WebSocketTest()
          {
             if ("WebSocket" in window)
@@ -17,14 +59,18 @@
                   // Web Socket is connected, send data using send()
                   // ws.send("Message to send");
                   // alert("Message is sent...");
-                  document.getElementById('addressftsresult').innerHTML = '';
+                  // document.getElementById('addressftsresult').DataTable();
                };
 
                ws.onmessage = function (evt)
                {
                   var received_msg = evt.data;
-                  // alert("Message is received..." + received_msg);
-                  document.getElementById('addressftsresult').innerHTML = received_msg;
+
+                  var datatable = $('#addressftsresult').DataTable();
+                  datatable.clear();
+                  datatable.rows.add(JSON.parse(received_msg));
+                  datatable.draw();
+
                };
 
                ws.onclose = function()
@@ -44,25 +90,88 @@
 
    </head>
    <body>
-      <input type="text" name="addressfts" id="addressfts" value="Wien, erster bezirk, akademiestrasse">
-      <div id="sse">
-         <a href="javascript:WebSocketTest()">Query Address</a>
+     <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Offene Adressen</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Volltextsuche</a></li>
+            <!--
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+            -->
+          </ul>
+        </div><!--/.nav-collapse -->
       </div>
-      <div id="addressftsresult">
-      </div>
-    </p>
-    <p>
-      Warum ist diese Seite so häßlich?
-    </p>
-    <p>
-      Diese Seite testet die Volltextsuche in Adressdaten des BEV.<br>
-      Der Quellcode für dieses Service ist verfügbar unter
-      <ul>
-        <li><a href='https://github.com/the42/bevdockerdb'>https://github.com/the42/bevdockerdb</a></li>
-        <li><a href='https://github.com/the42/bevaddress-dataload'>https://github.com/the42/bevaddress-dataload</a></li>
-        <li><a href='https://github.com/the42/bevaddressapi'>https://github.com/the42/bevaddressapi</a></li>
-      </ul>
-      Die API ist beschrieben unter <a href='https://github.com/the42/bevaddressapi/blob/master/README.md'>README</a>. Bau doch eine schönere Webseite!
-    </p>
+    </nav>
+
+    <div class="container">
+
+      <h1>Volltextsuche</h1>
+
+      <form>
+        <div class="form-group">
+          <label for="exampleInputEmail1">Adresse</label>
+          <input type="text"
+                 class="form-control"
+                 name="addressfts"
+                 id="addressfts"
+                 value="Wien, erster bezirk, akademiestrasse"
+                 placeholder="Wien, erster bezirk, akademiestrasse">
+        </div>
+
+        <div id="sse">
+           <a href="javascript:WebSocketTest()" class="btn btn-success">Adressen abfragen</a>
+        </div>
+      </form>
+
+      <br/><br/>
+
+
+      <table id="addressftsresult" class="display">
+        <thead>
+          <tr>
+            <th>PLZ</th>
+            <th>Gemeindename</th>
+            <th>Ortsname</th>
+            <th>Strassenname</th>
+            <th>Hausnr.</th>
+            <th>LatlongX</th>
+            <th>LatlongY</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        Diese Seite testet die Volltextsuche in Adressdaten des BEV.<br>
+        Der Quellcode für dieses Service ist verfügbar unter
+        <ul>
+          <li><a href='https://github.com/the42/bevdockerdb'>https://github.com/the42/bevdockerdb</a></li>
+          <li><a href='https://github.com/the42/bevaddress-dataload'>https://github.com/the42/bevaddress-dataload</a></li>
+          <li><a href='https://github.com/the42/bevaddressapi'>https://github.com/the42/bevaddressapi</a></li>
+        </ul>
+        Die API ist beschrieben unter <a href='https://github.com/the42/bevaddressapi/blob/master/README.md'>README</a>. Forke mich doch auf Github!
+      </p>
+
+    </div><!-- /.container -->
    </body>
 </html>
