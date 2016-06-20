@@ -52,7 +52,7 @@
          {
             if ("WebSocket" in window)
             {
-               var ws = new WebSocket("ws://185.38.252.139:6002/ws/address/fts?q=" +
+               var ws = new WebSocket("ws://api.bevaddress.allowed.org:6002/ws/address/fts?q=" +
                         document.getElementById('addressfts').value + '"');
 
                ws.onopen = function()
