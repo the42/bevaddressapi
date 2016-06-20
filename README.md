@@ -22,7 +22,8 @@ Local installation requires a working [Golang environment](https://golang.org/dl
 ## Configuration and running
 bevaddressapi accepts two environment variables for configuration:
 
-`PORT` - the tcp port on which the websocket API will listen for incoming connections;  
+`PORT` - the tcp port on which the websocket API will listen for incoming connections, defaults to 5000 if not set;
+`SECPORT` - the tcp port on which the websocket API will listen for incoming TLS connections; If not set or empty, the service is only served unencrypted;
 `DATABASE_URL` - a url defining the connection parameters to the database.
 
 Currently only PostGIS is supported as the database backend. See the

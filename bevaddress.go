@@ -41,6 +41,7 @@ and adresse.gkz = ortschaft.gkz
 inner join gemeinde
 on adresse.gkz = gemeinde.gkz`
 
+// TODO: read also paramter postfix for postfix match on each search word
 func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
 
 	param := r.URL.Query().Get("q")
@@ -110,10 +111,13 @@ func main() {
 	s := r.PathPrefix("/ws/").Subrouter()
 	s.HandleFunc("/address/fts", connection.fulltextSearch)
 
-	var port string
+	var port, secport string
+	if secport = os.Getenv("SECPORT"); secport != "" {
+		go http.ListenAndServeTLS(":"+secport, "cert.pem", "key.pem", r)
+	}
 	if port = os.Getenv("PORT"); port == "" {
 		port = "5000"
 	}
-
 	http.ListenAndServe(":"+port, r)
+
 }
