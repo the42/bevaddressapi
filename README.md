@@ -48,5 +48,5 @@ In case your database server does not support SSl-encryption use
 The fulltext search endpoint is exposed as a websocket and listens as following:
 
 * `/ws/address/fts`: A websocket endpoint for full text search. Paramters:  
-* `q` url-encoded string for full text search  
+`q` url-encoded string for full text search  
 `postfix` (optional, `false` (default); If set to `true`, search term(s) will also postfix match, eg. `Krems` will match the city Krems but also Kremsmünster.
