@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -100,7 +101,10 @@ func fatal(template string, values ...interface{}) {
 }
 
 func main() {
-	info("starting up")
+	var currdir string
+	currdir, _ = filepath.Abs(filepath.Dir(os.Args[0]))
+	info("starting up in " + currdir)
+
 	conn, err := getDatabaseConnection()
 	if err != nil {
 		fatal(err.Error())
