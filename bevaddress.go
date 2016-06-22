@@ -113,7 +113,11 @@ func main() {
 
 	var port, secport string
 	if secport = os.Getenv("SECPORT"); secport != "" {
-		go http.ListenAndServeTLS(":"+secport, "cert.pem", "key.pem", r)
+		go func() {
+			if err := http.ListenAndServeTLS(":"+secport, "cert.pem", "key.pem", r); err != nil {
+				fatal("Secure serving failed: " + err.Error())
+			}
+		}()
 		info("serving securely on port " + secport)
 	}
 	if port = os.Getenv("PORT"); port == "" {
