@@ -113,9 +113,8 @@ func main() {
 
 	var port, secport string
 	if secport = os.Getenv("SECPORT"); secport != "" {
-		info("serving securely on port" + secport)
 		go http.ListenAndServeTLS(":"+secport, "cert.pem", "key.pem", r)
-		info("serving securely on port" + secport)
+		info("serving securely on port " + secport)
 	}
 	if port = os.Getenv("PORT"); port == "" {
 		port = "5000"
