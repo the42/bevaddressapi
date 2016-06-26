@@ -1,165 +1,212 @@
 <!DOCTYPE HTML>
 <html>
-   <head>
-   <meta charset="utf-8"/>
-      <link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.6/yeti/bootstrap.min.css"
-            rel="stylesheet"
-            integrity="sha384-yxFy3Tt84CcGRj9UI7RA25hoUMpUPoFzcdPtK3hBdNgEGnh9FdKgMVM+lbAZTKN2"
-            crossorigin="anonymous">
+	<head>
+	<title>Offene-Adressen.at - Volltextsuche in Adressdaten des BEV</title>
+	<meta charset="utf-8"/>
 
-      <style>
-        body { padding-top: 70px; }
-      </style>
+	<link rel="shortcut icon" href="https://www.offene-adressen.at/assets/img/favicon.ico" type="image/x-icon">
 
-      <link rel="stylesheet"
-            type="text/css"
-            href="https://cdn.datatables.net/u/bs/dt-1.10.12/datatables.min.css"/>
+	<link href="https://www.offene-adressen.at/assets/css/bootstrap.min.css" rel="stylesheet"/>
+	<link rel="stylesheet" type="text/css" href="https://www.offene-adressen.at/assets/css/datatables.min.css"/>
+	<link rel="stylesheet" type="text/css" href="https://www.offene-adressen.at/assets/css/styles.css"/>
 
-      <script src="https://code.jquery.com/jquery-2.2.4.min.js"
-              integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
-              crossorigin="anonymous">
-      </script>
+	<script
+		src="https://www.offene-adressen.at/assets/js/jquery-2.2.4.min.js">
+	</script>
+	<script
+		src="https://www.offene-adressen.at/assets/js/bootstrap.min.js">
+	</script>
+	<script type="text/javascript"
+		  src="https://www.offene-adressen.at/assets/js/datatables.min.js">
+	</script>
 
-      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
-              integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
-              crossorigin="anonymous">
-      </script>
+	<script type="text/javascript">
+	// DataTable initialization
+	$(document).ready( function () {
+	$('#addressftsresult').DataTable(
+		{
+			columns: [
+				{ data: "PLZ",          width: "100" },
+				{ data: "Gemeindename", width: "100" },
+				{ data: "Ortsname",     width: "280" },
+				{ data: "Strassenname", width: "280" },
+				{ data: "Hausnr.",      width: "50" },
+				{ data: "LatlongX",     width: "100" },
+				{ data: "LatlongY",     width: "100" }
+			],
+			"language": {
+				"url": "https://www.offene-adressen.at/assets/German.json"
+			}
+		});
+	});
 
-      <script type="text/javascript"
-              src="https://cdn.datatables.net/u/bs/dt-1.10.12/datatables.min.js">
-      </script>
+	function StartWebSocket()
+	 {
+		if ("WebSocket" in window)
+		{
+		   //var ws = new WebSocket("ws://185.38.252.139:6002/ws/address/fts?q=" +
+		   var ws = new WebSocket("wss://api.bevaddress.allowed.org/ws/address/fts?q=" +
+					document.getElementById('addressfts').value + '"');
+		   ws.onopen = function()
+		   {
+			  document.getElementById('loading-image').style.display='block';
+			  // Web Socket is connected, send data using send()
+			  // ws.send("Message to send");
+		   };
 
-      <script type="text/javascript">
-        // DataTable initialization
-        $(document).ready( function () {
-          $('#addressftsresult').DataTable({
-            columns: [
-               { data: "PLZ",          width: "100" },
-               { data: "Gemeindename", width: "100" },
-               { data: "Ortsname",     width: "300" },
-               { data: "Strassenname", width: "300" },
-               { data: "Hausnr.",      width: "50" },
-               { data: "LatlongX",     width: "100" },
-               { data: "LatlongY",     width: "100" }
-            ],
-            "language": {
-              "url": "https://cdn.datatables.net/plug-ins/1.10.12/i18n/German.json"
-            }
-          });
-        });
+		   ws.onmessage = function (evt)
+		   {
+			  var received_msg = evt.data;
+			  document.getElementById('loading-image').style.display='none';
 
-        function WebSocketTest()
-         {
-            if ("WebSocket" in window)
-            {
-               var ws = new WebSocket("wss://api.bevaddress.allowed.org/ws/address/fts?q=" +
-                        document.getElementById('addressfts').value + '"');
+			  var datatable = $('#addressftsresult').DataTable();
+			  datatable.clear();
+			  datatable.rows.add(JSON.parse(received_msg));
+			  datatable.draw();
 
-               ws.onopen = function()
-               {
-                  // Web Socket is connected, send data using send()
-                  // ws.send("Message to send");
-               };
+		   };
 
-               ws.onmessage = function (evt)
-               {
-                  var received_msg = evt.data;
+		   ws.onclose = function()
+		   { // websocket is closed.
+		   };
+		}
+		else
+		{
+		  alert("WebSocket NOT supported by your Browser!");
+		}
+	 }
+	</script>
+	</head>
 
-                  var datatable = $('#addressftsresult').DataTable();
-                  datatable.clear();
-                  datatable.rows.add(JSON.parse(received_msg));
-                  datatable.draw();
+	<body>
+		<nav class="navbar navbar-default navbar-fixed-top">
+			<div class="container">
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a class="navbar-brand" href="#">Offene-Adressen.at</a>
+				</div>
+				<div id="navbar" class="collapse navbar-collapse">
+					<ul class="nav navbar-nav">
+						<!--
+						<li class="active"><a href="#">Volltextsuche</a></li>
+						<li><a href="#about">About</a></li>
+						<li><a href="#contact">Contact</a></li>
+						-->
+					</ul>
+				</div>
+			</div>
+		</nav>
 
-               };
+		<div class="container">
 
-               ws.onclose = function()
-               { // websocket is closed.
-               };
-            }
+		<div class="row">
+		<h1>Volltextsuche</h1>
 
-            else
-            {
-              alert("WebSocket NOT supported by your Browser!");
-            }
-         }
-      </script>
+		<form id="searchbox">
+			<div class="form-group">
+			<label for="addressfts">Bitte Adresse eingeben:</label>
+			<input type="text"
+				class="form-control"
+				name="addressfts"
+				id="addressfts"
+				value="Wien, erster bezirk, Akademiestrasse"
+				placeholder="Wien, erster bezirk, Akademiestrasse"
+				autofocus
+			/>
+			<script type="text/javascript">
+				//info: start search with enter too
+				$("#searchbox").submit(function(e){
+					e.preventDefault();
+					StartWebSocket();
+				});
+				//info: select address on focus
+				$("#searchbox input[type=text]").focus(function() {
+					$(this).select();
+				});
+			</script>
+			</div>
 
-   </head>
-   <body>
-     <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">Offene Adressen</a>
-        </div>
-        <div id="navbar" class="collapse navbar-collapse">
-          <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Volltextsuche</a></li>
-            <!--
-            <li><a href="#about">About</a></li>
-            <li><a href="#contact">Contact</a></li>
-            -->
-          </ul>
-        </div><!--/.nav-collapse -->
-      </div>
-    </nav>
+			<div id="sse">
+			<table>
+				<tr>
+					<td>
+						<a href="javascript:StartWebSocket()" class="btn btn-success">Adressen abfragen</a>
+					</td>
+					<td>
+						<div id="loading-image" style="padding-left:15px;display:none;">
+							<img src="assets/img/loading.gif" width="35" height="35" alt="loading" />
+						</div>
+					</td>
+				</tr>
+			</table>
+			</div>
+		</form>
+		</div>
+		<hr/>
 
-    <div class="container">
+		<div class="row table-responsive">
+		<table id="addressftsresult" class="table table-striped table-bordered table-hover">
+			<thead>
+				<tr class="primary">
+					<th>PLZ</th>
+					<th>Gemeindename</th>
+					<th>Ortsname</th>
+					<th>Strassenname</th>
+					<th>Hausnr.</th>
+					<th>LatlongX</th>
+					<th>LatlongY</th>
+				</tr>
+			</thead>
+		</table>
+		</div>
+		<hr/>
 
-      <div class="row">
-        <h1>Volltextsuche</h1>
-
-        <form>
-          <div class="form-group">
-            <label for="exampleInputEmail1">Adresse</label>
-            <input type="text"
-                   class="form-control"
-                   name="addressfts"
-                   id="addressfts"
-                   value="Wien, erster bezirk, akademiestrasse"
-                   placeholder="Wien, erster bezirk, akademiestrasse">
-          </div>
-
-          <div id="sse">
-             <a href="javascript:WebSocketTest()" class="btn btn-success">Adressen abfragen</a>
-          </div>
-        </form>
-      </div>
-      <hr/>
-
-      <div class="row table-responsive">
-        <table id="addressftsresult" class="table table-striped table-bordered table-hover">
-          <thead>
-            <tr class="primary">
-              <th>PLZ</th>
-              <th>Gemeindename</th>
-              <th>Ortsname</th>
-              <th>Strassenname</th>
-              <th>Hausnr.</th>
-              <th>LatlongX</th>
-              <th>LatlongY</th>
-            </tr>
-          </thead>
-        </table>
-      </div>
-      <hr/>
-
-      <div class="row">
-        Diese Seite testet die Volltextsuche in Adressdaten des BEV.<br>
-        Der Quellcode für dieses Service ist verfügbar unter
-        <ul>
-          <li><a href='https://github.com/the42/bevdockerdb'>https://github.com/the42/bevdockerdb</a></li>
-          <li><a href='https://github.com/the42/bevaddress-dataload'>https://github.com/the42/bevaddress-dataload</a></li>
-          <li><a href='https://github.com/the42/bevaddressapi'>https://github.com/the42/bevaddressapi</a></li>
-        </ul>
-        Die API ist beschrieben unter <a href='https://github.com/the42/bevaddressapi/blob/master/README.md'>README</a>. Forke mich doch auf Github!
-      </div>
-
-    </div><!-- /.container -->
-   </body>
+		<div class="row">
+		Diese Seite testet die Volltextsuche in <a href="http://www.bev.gv.at/portal/page?_pageid=713,2601271&_dad=portal&_schema=PORTAL" target="_blank">Adressdaten des BEV</a>.<br>
+		Der Quellcode f&uuml;r dieses Service ist verf&uuml;gbar unter
+		<ul>
+			<li><a href='https://github.com/the42/bevdockerdb'>https://github.com/the42/bevdockerdb</a></li>
+			<li><a href='https://github.com/the42/bevaddress-dataload'>https://github.com/the42/bevaddress-dataload</a></li>
+			<li><a href='https://github.com/the42/bevaddressapi'>https://github.com/the42/bevaddressapi</a></li>
+		</ul>
+		Die API ist beschrieben unter <a href='https://github.com/the42/bevaddressapi/blob/master/README.md'>README</a>.
+		<br/><br/>
+		Team:
+		<ul>
+			<li><a href="https://github.com/the42/" target="_blank">Johann H&ouml;chtl</a></li>
+			<li><a href="https://github.com/haslinger" target="_blank">Stefan Haslinger</a></li>
+			<li><a href="https://www.harm.co.at" target="_blank">Robert Harm</a></li>
+			<li><a href="https://www.sonjafischbauer.com" target="_blank">Sonja Fischbauer</a></li>
+		</ul>
+		Interesse an Mitarbeit? Dann bitte entweder Code gleich auf Github forken oder Email an <a href="mailto:info@offene-adressen.at?subject=Mitarbeit">info@offene-adressen.at</a>
+		</div>
+		<hr noshade size="1">
+		<p>
+		<div style="float:left;margin-top:5px;"><a href="https://www.open3.at" target="_blank" title="Webseite open3.at aufrufen"><img src="https://www.datamaps.eu/wp-content/uploads/open3logo.png" width="177" height="33"></a></div>
+		<div style="float:right;text-align:right;"><a href="http://opendefinition.org/od/2.0/de/" target="_blank" ><img src="https://www.datamaps.eu/wp-content/uploads/badge-od.png" width="80" height="15"> <img src="https://www.datamaps.eu/wp-content/uploads/badge-ok.png" width="80" height="15"> <img src="https://www.datamaps.eu/wp-content/uploads/badge-oc.png" width="80" height="15"></a><br/>
+		Ein Projekt von open3.at, dem Netzwerk zur F&ouml;rderung von openSociety, openGovernment und OpenData in &Ouml;sterreich
+		</p></div>
+		</div><!-- /.container -->
+		<!-- Piwik -->
+		<script type="text/javascript">
+			var _paq = _paq || [];
+			_paq.push(["setDomains", ["*.www.offene-adressen.at"]]);
+			_paq.push(['trackPageView']);
+			_paq.push(['enableLinkTracking']);
+			(function() {
+				var u="//www.mapsmarker.com/piwik/";
+				_paq.push(['setTrackerUrl', u+'piwik.php']);
+				_paq.push(['setSiteId', 20]);
+				var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+				g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+			})();
+		</script>
+		<noscript><p><img src="//www.mapsmarker.com/piwik/piwik.php?idsite=20" style="border:0;" alt="" /></p></noscript>
+		<!-- End Piwik Code -->
+	</body>
 </html>
