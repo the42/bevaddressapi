@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -26,12 +27,14 @@ type connection struct {
 	*sql.DB
 }
 
+const maxrowsFTS = 200
+const defaultrowsFTS = 25
 const fulltextSearchSQL = `select adresse.plz, gemeinde.gemeindename, ortschaft.ortsname, strasse.strassenname, adresse.hausnrzahl1, ST_Y(adresse.latlong), ST_X(adresse.latlong)
 from adresse
 inner join (select addritems.adrcd
 from addritems
 where search @@ to_tsquery(plainto_tsquery('german', $1)::text || ':*')
-limit 25) s
+limit $2) s
 on s.adrcd = adresse.adrcd
 inner join strasse
 on adresse.skz = strasse.skz
@@ -42,19 +45,34 @@ and adresse.gkz = ortschaft.gkz
 inner join gemeinde
 on adresse.gkz = gemeinde.gkz`
 
-// TODO: read also paramter postfix for postfix match on each search word
 func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
 
-	param := r.URL.Query().Get("q")
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		info(err.Error())
-		return
+	q := r.URL.Query().Get("q")
+
+	var n uint64
+	if nrows := r.URL.Query().Get("n"); nrows != "" {
+		var err error
+		if n, err = strconv.ParseUint(nrows, 10, 8); err != nil {
+			s := "Error when parsing parameter n: " + err.Error()
+			info(s)
+			http.Error(w, s, http.StatusBadRequest)
+			return
+		}
+		if n > maxrowsFTS {
+			s := "Paramter out of range"
+			info(s)
+			http.Error(w, s, http.StatusBadRequest)
+			return
+		}
+	} else {
+		n = defaultrowsFTS
 	}
 
-	rows, err := con.Query(fulltextSearchSQL, param)
+	rows, err := con.Query(fulltextSearchSQL, q, n)
 	if err != nil {
-		info(err.Error())
+		s := "Database query failed: " + err.Error()
+		info(s)
+		http.Error(w, s, http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -64,15 +82,25 @@ func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
 	var addresses []Address
 
 	for rows.Next() {
-		if err := rows.Scan(&plz, &gemeindename, &ortsname, &strassenname, &hausnrzahl1, &latlongy, &latlongx); err != nil {
-			info(err.Error())
+		if err = rows.Scan(&plz, &gemeindename, &ortsname, &strassenname, &hausnrzahl1, &latlongy, &latlongx); err != nil {
+			s := "Reading from database failed: " + err.Error()
+			info(s)
+			http.Error(w, s, http.StatusInternalServerError)
 			return
 		}
 
 		addr := Address{PLZ: plz, Gemeindename: gemeindename, Ortsname: ortsname, Strassenname: strassenname, Hausnr: hausnrzahl1, LatlongY: latlongy, LatlongX: latlongx}
-
 		addresses = append(addresses, addr)
 	}
+
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		s := "Connection upgrade to Websocket failed: " + err.Error()
+		info(s)
+		http.Error(w, s, http.StatusInternalServerError)
+		return
+	}
+
 	conn.WriteJSON(addresses)
 	conn.Close()
 }
@@ -101,8 +129,7 @@ func fatal(template string, values ...interface{}) {
 }
 
 func main() {
-	var currdir string
-	currdir, _ = filepath.Abs(filepath.Dir(os.Args[0]))
+	currdir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	info("starting up in " + currdir)
 
 	conn, err := getDatabaseConnection()
@@ -124,9 +151,11 @@ func main() {
 		}()
 		info("serving securely on port " + secport)
 	}
+
 	if port = os.Getenv("PORT"); port == "" {
 		port = "5000"
 	}
+
 	info("serving on port " + port)
 	http.ListenAndServe(":"+port, r)
 }
