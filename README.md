@@ -49,6 +49,14 @@ In case your database server does not support SSl-encryption use
 
 The fulltext search endpoint is exposed as a websocket and listens as following:
 
-* `/ws/address/fts`: A websocket endpoint for full text search. Paramters:  
-`q` url-encoded string for full text search  
-`n` (optional), `25` (default); return upto n results. A hard limit is implemented which prevents bulk download and to bring down the server.
+`/ws/address/fts`: A websocket endpoint for full text search. Paramters:
+* `q`: url-encoded string for full text search
+* `autocomplete`: when set to `0`, entered queries have to match exact, otherwise a prefix search is performed.
+
+Optional Filters:
+* `postcode`: filter by zip-code (Postleitzahl)
+* `citycode`: filter by [Gemeindekennzahl](http://www.statistik.at/web_de/klassifikationen/regionale_gliederungen/gemeinden/index.html)
+* `province`: filter by province (Bundesland). The coding is according to https://de.wikipedia.org/wiki/ISO_3166-2:AT
+* `lat`, `lon`: filter by latitude and longitude using [WGS84 coordinates](https://de.wikipedia.org/wiki/World_Geodetic_System_1984). When used, both parameters have to be set.
+
+* `n` (optional), `25` (default); return up to n results. A hard limit is implemented which prevents bulk download and to bring down the server.

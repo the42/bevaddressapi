@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -29,37 +30,34 @@ type connection struct {
 
 const maxrowsFTS = 200
 const defaultrowsFTS = 25
-const fulltextSearchSQL = `select adresse.plz, gemeinde.gemeindename, ortschaft.ortsname, strasse.strassenname, adresse.hausnrzahl1, ST_Y(adresse.latlong), ST_X(adresse.latlong)
+const nearbymeters = 50 // default distance to search nearby addresses in meter
+const autocomplete = `search @@ to_tsquery(plainto_tsquery('german', $1)::text || ':*')`
+const noautocomplete = `search @@ plainto_tsquery('german', $1)`
+
+const fulltextSearchSQL = `select addritems.plz, addritems.gemeindename, addritems.ortsname, addritems.strassenname, addritems.hausnrzahl1, ST_Y(adresse.latlong), ST_X(adresse.latlong)
 from adresse
-inner join (select addritems.adrcd
-from addritems
-where search @@ to_tsquery(plainto_tsquery('german', $1)::text || ':*')
-limit $2) s
-on s.adrcd = adresse.adrcd
-inner join strasse
-on adresse.skz = strasse.skz
-and adresse.gkz = strasse.gkz
-inner join ortschaft
-on adresse.okz = ortschaft.okz
-and adresse.gkz = ortschaft.gkz
-inner join gemeinde
-on adresse.gkz = gemeinde.gkz`
+inner join addritems
+on addritems.adrcd = adresse.adrcd
+and %s
+and addritems.plz like COALESCE(NULLIF($2, ''), addritems.plz)
+and addritems.gkz like COALESCE(NULLIF($3, ''), addritems.gkz)
+and addritems.bld = COALESCE(CAST(NULLIF($4, '') AS smallint), addritems.bld)
+and CASE ($5 = '' AND $6='') WHEN NOT FALSE THEN TRUE ELSE ST_DWithin(latlong_g, ST_GeomFromText('POINT(' || $5 || ' ' || $6 || ')', 4326)::geography, $7, false) END
+limit $8`
 
 func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
-
-	q := r.URL.Query().Get("q")
 
 	var n uint64
 	if nrows := r.URL.Query().Get("n"); nrows != "" {
 		var err error
 		if n, err = strconv.ParseUint(nrows, 10, 8); err != nil {
-			s := "Error when parsing parameter n: " + err.Error()
+			s := "error when parsing parameter n: " + err.Error()
 			info(s)
 			http.Error(w, s, http.StatusBadRequest)
 			return
 		}
 		if n > maxrowsFTS {
-			s := "Paramter out of range"
+			s := "paramter out of range"
 			info(s)
 			http.Error(w, s, http.StatusBadRequest)
 			return
@@ -68,9 +66,31 @@ func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
 		n = defaultrowsFTS
 	}
 
-	rows, err := con.Query(fulltextSearchSQL, q, n)
+	lat := r.URL.Query().Get("lat")
+	lon := r.URL.Query().Get("lon")
+
+	if (len(lat) > 0) != (len(lon) > 0) { // Latitude/Longitude: either both parameters are set or none of the two is set
+		s := "lat/lon: either both parameters are set to a value or both have to be empty"
+		info(s)
+		http.Error(w, s, http.StatusBadRequest)
+		return
+	}
+
+	q := r.URL.Query().Get("q")
+	postcode := r.URL.Query().Get("postcode")
+	citycode := r.URL.Query().Get("citycode")
+	province := r.URL.Query().Get("province")
+
+	var querystring string
+	if acparam := r.URL.Query().Get("autocomplete"); acparam == "0" {
+		querystring = fmt.Sprintf(fulltextSearchSQL, noautocomplete)
+	} else {
+		querystring = fmt.Sprintf(fulltextSearchSQL, noautocomplete)
+	}
+
+	rows, err := con.Query(querystring, q, postcode, citycode, province, lat, lon, nearbymeters, n)
 	if err != nil {
-		s := "Database query failed: " + err.Error()
+		s := "database query failed: " + err.Error()
 		info(s)
 		http.Error(w, s, http.StatusInternalServerError)
 		return
@@ -83,7 +103,7 @@ func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		if err = rows.Scan(&plz, &gemeindename, &ortsname, &strassenname, &hausnrzahl1, &latlongy, &latlongx); err != nil {
-			s := "Reading from database failed: " + err.Error()
+			s := "reading from database failed: " + err.Error()
 			info(s)
 			http.Error(w, s, http.StatusInternalServerError)
 			return
@@ -95,7 +115,7 @@ func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		s := "Connection upgrade to Websocket failed: " + err.Error()
+		s := "connection upgrade to websocket failed: " + err.Error()
 		info(s)
 		http.Error(w, s, http.StatusInternalServerError)
 		return
@@ -119,15 +139,6 @@ func getDatabaseConnection() (*sql.DB, error) {
 	return db, nil
 }
 
-// Log wrappers
-func info(template string, values ...interface{}) {
-	log.Printf("[bevaddress][info] "+template+"\n", values...)
-}
-
-func fatal(template string, values ...interface{}) {
-	log.Fatalf("[bevaddress][fatal] "+template+"\n", values...)
-}
-
 func main() {
 	currdir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	info("starting up in " + currdir)
@@ -146,7 +157,7 @@ func main() {
 	if secport = os.Getenv("SECPORT"); secport != "" {
 		go func() {
 			if err := http.ListenAndServeTLS(":"+secport, "cert.pem", "key.pem", r); err != nil {
-				fatal("Secure serving failed: " + err.Error())
+				fatal("secure serving failed: " + err.Error())
 			}
 		}()
 		info("serving securely on port " + secport)
@@ -158,4 +169,13 @@ func main() {
 
 	info("serving on port " + port)
 	http.ListenAndServe(":"+port, r)
+}
+
+// Log wrappers
+func info(template string, values ...interface{}) {
+	log.Printf("[bevaddress][info] "+template+"\n", values...)
+}
+
+func fatal(template string, values ...interface{}) {
+	log.Fatalf("[bevaddress][fatal] "+template+"\n", values...)
 }
