@@ -49,14 +49,24 @@ In case your database server does not support SSl-encryption use
 
 The fulltext search endpoint is exposed as a websocket and listens as following:
 
-`/ws/address/fts`: A websocket endpoint for full text search. Paramters:
-* `q`: url-encoded string for full text search
-* `autocomplete`: when set to `0`, entered queries have to match exact, otherwise a prefix search is performed.
+`/ws/address/fts`: A websocket endpoint for full text search.
 
-Optional Filters:
-* `postcode`: filter by zip-code (Postleitzahl)
-* `citycode`: filter by [Gemeindekennzahl](http://www.statistik.at/web_de/klassifikationen/regionale_gliederungen/gemeinden/index.html)
-* `province`: filter by province (Bundesland). The coding is according to https://de.wikipedia.org/wiki/ISO_3166-2:AT
+Parameters:
+
+* `q` (required): url-encoded string for full text search.
+
+All further parameters are optional:
+
+* `autocomplete`: when set to `0`, queries have to match exactly, any other parameter value will result in a  postfix wildcard match.  
+**Example**: with `autocomplete=0`, the query `3500 Krems, Eisentürg` will not return any results, whereas with autocomplete set to any other value but `0` (default), the query will match `3500 Krems, Eisentürgasse`.  
+*Default*: `true`
+
+Filters:
+* `postcode`: filter by zip-code (Postleitzahl). Partial match is supported by including the character `%`, eg. `postcode=35%` will match any zip code starting with 35..
+* `citycode`: filter by [Gemeindekennzahl](http://www.statistik.at/web_de/klassifikationen/regionale_gliederungen/gemeinden/index.html). Partial match is supported by including the character `%`.
+* `province`: filter by province (Bundesland). The coding is according to https://de.wikipedia.org/wiki/ISO_3166-2:AT eg. Burgenland=1, Kärnten=2, ... .
 * `lat`, `lon`: filter by latitude and longitude using [WGS84 coordinates](https://de.wikipedia.org/wiki/World_Geodetic_System_1984). When used, both parameters have to be set.
 
-* `n` (optional), `25` (default); return up to n results. A hard limit is implemented which prevents bulk download and to bring down the server.
+Number of returned results:
+* `n`: return up to n results. A hard limit is implemented which prevents bulk downloads bringing down the server.  
+*Default*: `25`
