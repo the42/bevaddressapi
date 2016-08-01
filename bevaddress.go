@@ -85,7 +85,7 @@ func (con *connection) fulltextSearch(w http.ResponseWriter, r *http.Request) {
 	if acparam := r.URL.Query().Get("autocomplete"); acparam == "0" {
 		querystring = fmt.Sprintf(fulltextSearchSQL, noautocomplete)
 	} else {
-		querystring = fmt.Sprintf(fulltextSearchSQL, noautocomplete)
+		querystring = fmt.Sprintf(fulltextSearchSQL, autocomplete)
 	}
 
 	rows, err := con.Query(querystring, q, postcode, citycode, province, lat, lon, nearbymeters, n)
