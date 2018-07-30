@@ -31,7 +31,7 @@ type connection struct {
 const maxrowsFTS = 200
 const defaultrowsFTS = 25
 const nearbymeters = 50 // default distance to search nearby addresses in meter
-const autocomplete = `search @@ to_tsquery(plainto_tsquery('german', $1)::text || ':*')`
+const autocomplete = `search @@ plainto_tsquery('german', $1 || ':*')`
 const noautocomplete = `search @@ plainto_tsquery('german', $1)`
 
 const fulltextSearchSQL = `select addritems.plz, addritems.gemeindename, addritems.ortsname, addritems.strassenname, addritems.hausnrzahl1, ST_Y(adresse.latlong), ST_X(adresse.latlong)
